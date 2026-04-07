@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from random import randrange
@@ -30,14 +30,17 @@ def root():
 def posts():
     return {"data": saved_posts}
 
-@app.get("/posts/{id}")
-def post(id: int):
-    return find_post(id)
-
 # first post http request to create posts (expecting data from user in certain format to create and save correctly)
-@app.post("/posts")
+@app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(payload: Post):
-    post_dict = payload.dict()
+    post_dict = payload.model_dump()
     post_dict["id"] = randrange(0, 10000000)
     saved_posts.append(post_dict)
     return {"data": post_dict}
+
+@app.get("/posts/{id}")
+def post(id: int):
+    post = find_post(id)
+    if post:
+        return post
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} does not exist")
