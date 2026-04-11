@@ -20,6 +20,11 @@ def find_post(id: int):
         if p["id"] == id:
             return p
 
+def find_post_index(id: int):
+    for i, p in enumerate(saved_posts):
+        if p["id"] == id:
+            return i
+
 # the root of the web app
 @app.get("/")
 def root():
@@ -44,3 +49,22 @@ def post(id: int):
     if post:
         return post
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} does not exist")
+
+@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(id: int):
+    index = find_post_index(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} does not exist")
+    saved_posts.pop(index)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
+def update_post(id: int, post: Post):
+    index = find_post_index(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} does not exist")
+    post_dict = post.model_dump()
+    post_dict["id"] = id
+    saved_posts[index] = post_dict
+    return {"message" : "Updated successfully!"}
+
