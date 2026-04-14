@@ -1,7 +1,25 @@
 from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 from random import randrange
+from psycopg_pool import ConnectionPool
+
+# pool gestisce il rilascio della connessione
+db_pool = ConnectionPool(
+    conninfo="dbname=fastapi user=postgres password=password123 host=127.0.0.1",
+    min_size=2,     # connessioni sempre aperte (calde)
+    max_size=10,    # limite massimo per non crashare il DB
+    timeout=30.0,   # quanto aspettare se il pool è pieno (secondi)
+    open=True       # Apre il pool immediatamente
+)
+
+# def db_cursor()
+
+# 'with' gestisce la transazione anche in caso d'errore e chiude la connessione
+with db_pool.connection() as conn:
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM posts")
+        saved_posts = cur.fetchall()
+        print(saved_posts)
 
 app = FastAPI()
 
@@ -10,10 +28,9 @@ class Post(BaseModel):
     title: str
     content: str
     isPublic: bool = True
-    rate: Optional[int] = None
 
-saved_posts = [{"title": "Post 1", "content": "Content 1", "id": 1},
-               {"title": "Post 2", "content": "Content 2", "id": 2}]
+# saved_posts = [{"title": "Post 1", "content": "Content 1", "id": 1},
+#                {"title": "Post 2", "content": "Content 2", "id": 2}]
 
 def find_post(id: int):
     for p in saved_posts:
@@ -33,6 +50,7 @@ def root():
 # a sub page of the app to display the posts
 @app.get("/posts")
 def posts():
+    print(type(db_pool))
     return {"data": saved_posts}
 
 # first post http request to create posts (expecting data from user in certain format to create and save correctly)
