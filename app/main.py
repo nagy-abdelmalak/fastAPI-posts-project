@@ -12,8 +12,6 @@ db_pool = ConnectionPool(
     open=True       # Apre il pool immediatamente
 )
 
-# def db_cursor()
-
 # 'with' gestisce la transazione anche in caso d'errore e chiude la connessione
 with db_pool.connection() as conn:
     with conn.cursor() as cur:
