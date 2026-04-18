@@ -68,13 +68,13 @@ class Settings(BaseSettings):
     
     @field_validator("DB_POOL_MAX_SIZE")
     @classmethod
-    def max_must_exceed_min(cls, v: int, info) -> int:
+    def max_must_exceed_min(cls, max: int, info) -> int:
         min = info.data.get("DB_POOL_MIN_SIZE")
-        if v < min:
+        if max < min:
             raise ValueError(
-                f"DB_POOL_MAX_SIZE ({v}) must be >= DB_POOL_MIN_SIZE"
+                f"DB_POOL_MAX_SIZE ({max}) must be >= DB_POOL_MIN_SIZE"
             )
-        return v
+        return max
     
     @property
     def is_production(self) -> bool:
@@ -84,14 +84,16 @@ class Settings(BaseSettings):
     def is_test(self) -> bool:
       return self.ENVIRONMENT == 'test'
 
-"""lru_cache it tells python to create the below function only once, 
+"""
+lru_cache it tells python to create the below function only once, 
 pull it from cache whenever you need it and no need to change the result.
 When it get rexecuted:
  - different inputs
  - cache limit: with different inputs, different results gets saved in cache, setting
    limit @lru_cache(maxsize=128)tells python to drop the least recently
    used when the results saved exceed the limit (128 in this example)
- - manually clear cache: in this case getSettings().cache_clear()"""
+ - manually clear cache: in this case getSettings().cache_clear()
+ """
 @lru_cache
 def get_settings() -> Settings:
    return Settings()
