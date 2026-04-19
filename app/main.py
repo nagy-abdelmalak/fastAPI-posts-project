@@ -1,25 +1,31 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Response, status, HTTPException
+from psycopg_pool import ConnectionPool
 from pydantic import BaseModel
 from random import randrange
-from psycopg_pool import ConnectionPool
 
-# pool gestisce il rilascio della connessione
-db_pool = ConnectionPool(
-    conninfo="dbname=fastapi user=postgres password=password123 host=127.0.0.1",
-    min_size=2,     # connessioni sempre aperte (calde)
-    max_size=10,    # limite massimo per non crashare il DB
-    timeout=30.0,   # quanto aspettare se il pool è pieno (secondi)
-    open=True       # Apre il pool immediatamente
-)
+from app.core.config import get_settings
+from app.db import database
 
-# 'with' gestisce la transazione anche in caso d'errore e chiude la connessione
-with db_pool.connection() as conn:
-    with conn.cursor() as cur:
-        cur.execute("SELECT * FROM posts")
-        saved_posts = cur.fetchall()
-        print(saved_posts)
+settings = get_settings()
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # pool gestisce il rilascio della connessione
+    database.pool= ConnectionPool(
+        conninfo= settings.DATABASE_URL,
+        min_size= settings.DB_POOL_MIN_SIZE,     # connessioni sempre aperte (calde)
+        max_size= settings.DB_POOL_MAX_SIZE,    # limite massimo per non crashare il DB
+        timeout= settings.DB_POOL_TIMEOUT,   # quanto aspettare se il pool è pieno (secondi)
+        open= True       # Apre il pool immediatamente
+    )
+
+    yield
+
+    database.pool.close()
+
+app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
 # using a scheme to get post data easily and validated in the target value type
 class Post(BaseModel):
