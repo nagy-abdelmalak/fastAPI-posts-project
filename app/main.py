@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response, status, HTTPException
@@ -6,24 +7,34 @@ from pydantic import BaseModel
 from random import randrange
 
 from app.core.config import get_settings
+from app.core.logging_config import setup_logging
 from app.db import database
+from app.api.v1.api import api_router
 
 settings = get_settings()
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI, settings):
+    # --- STARTUP ---
+    setup_logging()
+    logger = logging.getLogger("app.main")
+
+    logging.info(f"starting {settings.PROJECT_NAME} (env={settings.ENVIRONMENT})")
+
     # pool gestisce il rilascio della connessione
     database.pool= ConnectionPool(
         conninfo= settings.DATABASE_URL,
-        min_size= settings.DB_POOL_MIN_SIZE,     # connessioni sempre aperte (calde)
-        max_size= settings.DB_POOL_MAX_SIZE,    # limite massimo per non crashare il DB
-        timeout= settings.DB_POOL_TIMEOUT,   # quanto aspettare se il pool è pieno (secondi)
-        open= True       # Apre il pool immediatamente
+        min_size= settings.DB_POOL_MIN_SIZE,      # connessioni sempre aperte (calde)
+        max_size= settings.DB_POOL_MAX_SIZE,      # limite massimo per non crashare il DB
+        timeout= settings.DB_POOL_TIMEOUT,        # quanto aspettare se il pool è pieno (secondi)
+        open= True                                # Apre il pool immediatamente
     )
+    logger.info("db_pool_opened")
 
     yield
 
     database.pool.close()
+    logger.info("db_pool_closed")
 
 app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
