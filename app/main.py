@@ -36,15 +36,15 @@ class Post(BaseModel):
 # saved_posts = [{"title": "Post 1", "content": "Content 1", "id": 1},
 #                {"title": "Post 2", "content": "Content 2", "id": 2}]
 
-def find_post(id: int):
-    for p in saved_posts:
-        if p["id"] == id:
-            return p
+# def find_post(id: int):
+#     for p in saved_posts:
+#         if p["id"] == id:
+#             return p
 
-def find_post_index(id: int):
-    for i, p in enumerate(saved_posts):
-        if p["id"] == id:
-            return i
+# def find_post_index(id: int):
+#     for i, p in enumerate(saved_posts):
+#         if p["id"] == id:
+#             return i
 
 # the root of the web app
 @app.get("/")
