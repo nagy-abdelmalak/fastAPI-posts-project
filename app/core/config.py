@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     DB_POOL_MIN_SIZE: int = Field(default=2, ge=1, le=100)
     DB_POOL_MAX_SIZE: int = Field(default=10, ge=1, le=100)
+    DB_POOL_TIMEOUT: float = Field(default=30.0)
 
     # --- Security ---
     SECRET_KEY: str = Field(min_length=32)
@@ -59,12 +60,12 @@ class Settings(BaseSettings):
     LOG_DIR: str = "logs"
     LOG_TO_FILE: bool = True
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
-        if isinstance(v, str) and v:
-            return [i.strip() for i in v.split(",") if i.stripe]
-        return v
+    # @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    # @classmethod
+    # def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+    #     if isinstance(v, str) and v:
+    #         return [i.strip() for i in v.split(",") if i.stripe]
+    #     return v
     
     @field_validator("DB_POOL_MAX_SIZE")
     @classmethod
